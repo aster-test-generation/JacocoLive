@@ -5,6 +5,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import argparse
 import yaml
+from flask import Flask, jsonify
+
+app = Flask(__name__)
 
 # === Args ===
 parser = argparse.ArgumentParser(description="Track JaCoCo coverage changes over time")
@@ -14,7 +17,9 @@ parser.add_argument('--cli', default='/home/rkh/Downloads/share/lib/jacococli.ja
 parser.add_argument('--address', default='localhost', help='JaCoCo agent address')
 parser.add_argument('--port', default='6300', help='JaCoCo agent port')
 parser.add_argument('--output', default='coverage_log.yaml', help='YAML file to write')
-parser.add_argument('--interval', default=10, type=int, help='Interval in seconds between coverage dumps')
+# parser.add_argument('--interval', default=10, type=int, help='Interval in seconds between coverage dumps')
+parser.add_argument('--host', default='0.0.0.0', help='Flask server host')
+parser.add_argument('--flask-port', type=int, default=5000, help='Flask server port')
 args = parser.parse_args()
 
 # === Files ===
@@ -138,51 +143,60 @@ def output_to_yaml_file(entry):
     with open(args.output, 'a') as f:
         yaml.dump([entry], f, sort_keys=False, default_flow_style=False, indent=2)
 
-# === Main Loop ===
-if __name__ == "__main__":
-    print(f"📡 Writing YAML coverage logs to {args.output} every 10 seconds...\n")
-    while True:
-        try:
-            dump_coverage()
-            generate_xml()
+@app.route('/refresh', methods=['GET'])
+def refresh_coverage():
+    global previous_coverage_summary, previous_lines_covered
 
-            summary = parse_coverage_summary(XML_FILE)
-            current_lines = parse_covered_lines(XML_FILE)
-            new_lines = get_newly_covered_lines(current_lines, previous_lines_covered)
-            diff = diff_summary(summary, previous_coverage_summary)
+    
+    try:
+        dump_coverage()
+        generate_xml()
 
-            yaml_entry = {
-                'timestamp': datetime.now().isoformat(),
-                'overall_coverage': {
-                },
-                'coverage_change': diff,
-                'newly_covered_lines': new_lines or {},
-            }
+        summary = parse_coverage_summary(XML_FILE)
+        current_lines = parse_covered_lines(XML_FILE)
+        new_lines = get_newly_covered_lines(current_lines, previous_lines_covered)
+        diff = diff_summary(summary, previous_coverage_summary)
 
-            if summary:
-                if 'INSTRUCTION' in summary:
-                    yaml_entry['overall_coverage']['INSTRUCTION'] = {
-                        'covered': summary['INSTRUCTION']['covered'],
-                        'total': summary['INSTRUCTION']['missed'] + summary['INSTRUCTION']['covered'],
-                        'percent': (summary['INSTRUCTION']['covered'] / (summary['INSTRUCTION']['missed'] + summary['INSTRUCTION']['covered'])) * 100
-                    }
-                if 'LINE' in summary:
-                    yaml_entry['overall_coverage']['LINE'] = {
-                        'missed': summary['LINE']['missed'],
-                        'total': summary['LINE']['missed'] + summary['LINE']['covered'],
-                        'percent': (summary['LINE']['covered'] / (summary['LINE']['missed'] + summary['LINE']['covered'])) * 100
-                    }
-                if 'BRANCH' in summary:
-                    yaml_entry['overall_coverage']['BRANCH'] = {
-                        'missed': summary['BRANCH']['missed'],
-                        'total': summary['BRANCH']['missed'] + summary['BRANCH']['covered'],
-                        'percent': (summary['BRANCH']['covered'] / (summary['BRANCH']['missed'] + summary['BRANCH']['covered'])) * 100
-                    }
+        yaml_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'overall_coverage': {
+            },
+            'coverage_change': diff,
+            'newly_covered_lines': new_lines or {},
+        }
 
-            output_to_yaml_file(yaml_entry)
-            previous_lines_covered = current_lines
-            previous_coverage_summary = summary
-            print(f"✅ Logged at {yaml_entry['timestamp']}")
-        except Exception as e:
-            print(f"[ERROR] {e}")
-        time.sleep(args.interval)
+        if summary:
+            if 'INSTRUCTION' in summary:
+                yaml_entry['overall_coverage']['INSTRUCTION'] = {
+                    'covered': summary['INSTRUCTION']['covered'],
+                    'total': summary['INSTRUCTION']['missed'] + summary['INSTRUCTION']['covered'],
+                    'percent': (summary['INSTRUCTION']['covered'] / (summary['INSTRUCTION']['missed'] + summary['INSTRUCTION']['covered'])) * 100
+                }
+            if 'LINE' in summary:
+                yaml_entry['overall_coverage']['LINE'] = {
+                    'missed': summary['LINE']['missed'],
+                    'total': summary['LINE']['missed'] + summary['LINE']['covered'],
+                    'percent': (summary['LINE']['covered'] / (summary['LINE']['missed'] + summary['LINE']['covered'])) * 100
+                }
+            if 'BRANCH' in summary:
+                yaml_entry['overall_coverage']['BRANCH'] = {
+                    'missed': summary['BRANCH']['missed'],
+                    'total': summary['BRANCH']['missed'] + summary['BRANCH']['covered'],
+                    'percent': (summary['BRANCH']['covered'] / (summary['BRANCH']['missed'] + summary['BRANCH']['covered'])) * 100
+                }
+
+        output_to_yaml_file(yaml_entry)
+        previous_lines_covered = current_lines
+        previous_coverage_summary = summary
+        return jsonify(summary)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({'message': 'Use /refresh to trigger coverage update.'})
+
+# === Run ===
+if __name__ == '__main__':
+    print(f"🚀 Starting JaCoCo API server on {args.host}:{args.flask_port}")
+    app.run(host=args.host, port=args.flask_port)
