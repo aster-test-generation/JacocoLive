@@ -32,6 +32,10 @@ previous_coverage_summary = None
 
 # === Step 1: Trigger dump ===
 def dump_coverage():
+    # remove old file
+    if os.path.exists(EXEC_FILE):
+        os.remove(EXEC_FILE)
+
     subprocess.run([
         "java", "-jar", args.cli, "dump",
         "--address", args.address,
@@ -42,6 +46,9 @@ def dump_coverage():
 
 # === Step 2: Generate XML ===
 def generate_xml():
+    # remove old file
+    if os.path.exists(XML_FILE):
+        os.remove(XML_FILE)
     subprocess.run([
         "java", "-jar", args.cli, "report", EXEC_FILE,
         "--classfiles", args.classfiles,
@@ -174,13 +181,13 @@ def refresh_coverage():
                 }
             if 'LINE' in summary:
                 yaml_entry['overall_coverage']['LINE'] = {
-                    'missed': summary['LINE']['missed'],
+                    'covered': summary['LINE']['covered'],
                     'total': summary['LINE']['missed'] + summary['LINE']['covered'],
                     'percent': (summary['LINE']['covered'] / (summary['LINE']['missed'] + summary['LINE']['covered'])) * 100
                 }
             if 'BRANCH' in summary:
                 yaml_entry['overall_coverage']['BRANCH'] = {
-                    'missed': summary['BRANCH']['missed'],
+                    'covered': summary['BRANCH']['covered'],
                     'total': summary['BRANCH']['missed'] + summary['BRANCH']['covered'],
                     'percent': (summary['BRANCH']['covered'] / (summary['BRANCH']['missed'] + summary['BRANCH']['covered'])) * 100
                 }
