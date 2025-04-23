@@ -11,7 +11,7 @@ pip install flask
 
 First launch the monitored application with Jacoco agent, then start this application.
 ```
-python main.py --classfiles [path to the class files of the monitored app] --sourcefiles [path to the sources files of the monitored app] --cli [path to jacococli.jar] --address [address of the Jacoco agent (default: localhost)] --port [Jacoco agent port (default: 6300)] --output [output file (default: coverage_log.yaml)] --host [this app's host (default: 0.0.0.0)] --flask-port [this app's port (default: 5000)]
+python main.py --classfiles [path to the class files of the monitored app i.e. target folder] --sourcefiles [path to the sources files of the monitored app i.e. src/main folder] --cli [path to jacococli.jar] --address [address of the Jacoco agent (default: localhost)] --port [Jacoco agent port (default: 6300)] --output [output file (default: coverage_log.yaml)] --host [this app's host (default: 0.0.0.0)] --flask-port [this app's port (default: 5000)]
 ```
 
 As long as this app is running, ask it to record the coverage:
