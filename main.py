@@ -64,21 +64,35 @@ def parse_coverage_summary(xml_path):
         if counter.get('type') == 'INSTRUCTION':
             missed = int(counter.get('missed'))
             covered = int(counter.get('covered'))
-            summary['INSTRUCTION'] = {
+            summary['instruction'] = {
                 'missed': missed,
                 'covered': covered
             }
         if counter.get('type') == 'LINE':
             missed = int(counter.get('missed'))
             covered = int(counter.get('covered'))
-            summary['LINE'] = {
+            summary['line'] = {
                 'missed': missed,
                 'covered': covered
             }
         if counter.get('type') == 'BRANCH':
             missed = int(counter.get('missed'))
             covered = int(counter.get('covered'))
-            summary['BRANCH'] = {
+            summary['branch'] = {
+                'missed': missed,
+                'covered': covered
+            }
+        if counter.get('type') == 'METHOD':
+            missed = int(counter.get('missed'))
+            covered = int(counter.get('covered'))
+            summary['method'] = {
+                'missed': missed,
+                'covered': covered
+            }
+        if counter.get('type') == 'CLASS':
+            missed = int(counter.get('missed'))
+            covered = int(counter.get('covered'))
+            summary['class'] = {
                 'missed': missed,
                 'covered': covered
             }
@@ -173,23 +187,35 @@ def refresh_coverage():
         }
 
         if summary:
-            if 'INSTRUCTION' in summary:
-                yaml_entry['overall_coverage']['INSTRUCTION'] = {
-                    'covered': summary['INSTRUCTION']['covered'],
-                    'total': summary['INSTRUCTION']['missed'] + summary['INSTRUCTION']['covered'],
-                    'percent': (summary['INSTRUCTION']['covered'] / (summary['INSTRUCTION']['missed'] + summary['INSTRUCTION']['covered'])) * 100
+            if 'instruction' in summary:
+                yaml_entry['overall_coverage']['instruction'] = {
+                    'covered': summary['instruction']['covered'],
+                    'total': summary['instruction']['missed'] + summary['instruction']['covered'],
+                    'percent': (summary['instruction']['covered'] / (summary['instruction']['missed'] + summary['instruction']['covered'])) * 100
                 }
-            if 'LINE' in summary:
-                yaml_entry['overall_coverage']['LINE'] = {
-                    'covered': summary['LINE']['covered'],
-                    'total': summary['LINE']['missed'] + summary['LINE']['covered'],
-                    'percent': (summary['LINE']['covered'] / (summary['LINE']['missed'] + summary['LINE']['covered'])) * 100
+            if 'line' in summary:
+                yaml_entry['overall_coverage']['line'] = {
+                    'covered': summary['line']['covered'],
+                    'total': summary['line']['missed'] + summary['line']['covered'],
+                    'percent': (summary['line']['covered'] / (summary['line']['missed'] + summary['line']['covered'])) * 100
                 }
-            if 'BRANCH' in summary:
-                yaml_entry['overall_coverage']['BRANCH'] = {
-                    'covered': summary['BRANCH']['covered'],
-                    'total': summary['BRANCH']['missed'] + summary['BRANCH']['covered'],
-                    'percent': (summary['BRANCH']['covered'] / (summary['BRANCH']['missed'] + summary['BRANCH']['covered'])) * 100
+            if 'branch' in summary:
+                yaml_entry['overall_coverage']['branch'] = {
+                    'covered': summary['branch']['covered'],
+                    'total': summary['branch']['missed'] + summary['branch']['covered'],
+                    'percent': (summary['branch']['covered'] / (summary['branch']['missed'] + summary['branch']['covered'])) * 100
+                }
+            if 'method' in summary:
+                yaml_entry['overall_coverage']['method'] = {
+                    'covered': summary['method']['covered'],
+                    'total': summary['method']['missed'] + summary['method']['covered'],
+                    'percent': (summary['method']['covered'] / (summary['method']['missed'] + summary['method']['covered'])) * 100
+                }
+            if 'class' in summary:
+                yaml_entry['overall_coverage']['class'] = {
+                    'covered': summary['class']['covered'],
+                    'total': summary['class']['missed'] + summary['class']['covered'],
+                    'percent': (summary['class']['covered'] / (summary['class']['missed'] + summary['class']['covered'])) * 100
                 }
 
         output_to_yaml_file(yaml_entry)
@@ -205,5 +231,5 @@ def home():
 
 # === Run ===
 if __name__ == '__main__':
-    print(f"🚀 Starting JaCoCo API server on {args.host}:{args.flask_port}")
+    print(f"Starting JaCoCo API server on {args.host}:{args.flask_port}")
     app.run(host=args.host, port=args.flask_port)
